@@ -85,10 +85,20 @@ export const TourGuideProvider = ({
     }
   }, [mounted, steps])
 
-  const moveToCurrentStep = async () => {
-    const size = await currentStep!.target.measure()
-    if (isNaN(size.width) || isNaN(size.height) || isNaN(size.x) || isNaN(size.y)) {
-      return;
+  const moveToCurrentStep = async (step?: IStep) => {
+    let size
+    if (!currentStep) {
+      size = await step?.target.measure()
+    } else {
+      size = await currentStep!.target.measure()
+    }
+    if (
+      isNaN(size.width) ||
+      isNaN(size.height) ||
+      isNaN(size.x) ||
+      isNaN(size.y)
+    ) {
+      return
     }
     await modal.current?.animateMove({
       width: size.width + OFFSET_WIDTH,
@@ -98,14 +108,26 @@ export const TourGuideProvider = ({
     })
   }
 
-  const setCurrentStep = (step?: IStep) =>
-    new Promise<void>((resolve) => {
-      updateCurrentStep(() => {
-        eventEmitter.emit('stepChange', step)
+  const setCurrentStep = (step?: IStep) => {
+    return new Promise<void>((resolve) => {
+      if (!step) {
         resolve()
-        return step
-      })
+        return
+      }
+
+      const time = animationDuration ? animationDuration + 200 : 200
+
+      moveToCurrentStep(step)
+
+      setTimeout(() => {
+        updateCurrentStep(() => {
+          eventEmitter.emit('stepChange', step)
+          resolve()
+          return step
+        })
+      }, time)
     })
+  }
 
   const getNextStep = (step: IStep | undefined = currentStep) =>
     utils.getNextStep(steps!, step)
@@ -117,9 +139,10 @@ export const TourGuideProvider = ({
 
   const getLastStep = () => utils.getLastStep(steps!)
 
-  const isFirstStep = useMemo(() => currentStep === getFirstStep(), [
-    currentStep,
-  ])
+  const isFirstStep = useMemo(
+    () => currentStep === getFirstStep(),
+    [currentStep],
+  )
 
   const isLastStep = useMemo(() => currentStep === getLastStep(), [currentStep])
 

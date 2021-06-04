@@ -28,6 +28,7 @@ interface Props {
   borderRadius?: number
   currentStep?: IStep
   easing?(value: number): number
+  stop(): void
 }
 
 interface State {
@@ -173,20 +174,9 @@ export class SvgMask extends Component<Props, State> {
     })
   }
 
-  render() {
-    if (!this.state.canvasSize) {
-      return null
-    }
-    const { dismissOnPress, stop } = this.props
-    const Wrapper = dismissOnPress ? TouchableWithoutFeedback : View
-
+  renderSvg = () => {
     return (
-      <Wrapper
-        style={this.props.style}
-        onLayout={this.handleLayout}
-        pointerEvents='none'
-        onPress={dismissOnPress ? stop : undefined}
-      >
+      <>
         <Svg
           pointerEvents='none'
           width={this.state.canvasSize.x}
@@ -201,7 +191,36 @@ export class SvgMask extends Component<Props, State> {
             opacity={this.state.opacity as any}
           />
         </Svg>
-      </Wrapper>
+      </>
+    )
+  }
+
+  render() {
+    if (!this.state.canvasSize) {
+      return null
+    }
+    const { dismissOnPress, stop } = this.props
+
+    return dismissOnPress ? (
+      <TouchableWithoutFeedback
+        style={this.props.style}
+        onLayout={this.handleLayout}
+        onPress={() => {
+          if (dismissOnPress) {
+            stop()
+          }
+        }}
+      >
+        {this.renderSvg()}
+      </TouchableWithoutFeedback>
+    ) : (
+      <View
+        style={this.props.style}
+        onLayout={this.handleLayout}
+        pointerEvents='none'
+      >
+        {this.renderSvg()}
+      </View>
     )
   }
 }
