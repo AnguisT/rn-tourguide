@@ -77,7 +77,9 @@ export const TourGuideProvider = ({
       if (Object.entries(steps).length > 0) {
         setCanStart(true)
         if (startAtMount) {
-          start()
+          setTimeout(() => {
+            start()
+          }, 500)
         }
       } else {
         setCanStart(false)
